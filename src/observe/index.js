@@ -53,7 +53,7 @@ export function observe(data) {
   if (typeof data !== "object" || data === null) {
     return;
   }
-  if (data.__ob__ instanceof observe) {
+  if (data.__ob__ instanceof Observer) {
     // 说明被观测过了
     return data.__ob__;
   }
