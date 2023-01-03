@@ -35,7 +35,6 @@ methods.forEach((method) => {
         break;
     }
     // 将获取到的inserted，当前新增元素的数组，再次进行observerArray
-    console.log(inserted);
     if (inserted) {
       // 再次进行对新增内容的劫持检测
       ob.observeArray(inserted);

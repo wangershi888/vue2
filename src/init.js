@@ -34,7 +34,7 @@ export function initMixin(Vue) {
       // 如果有template，则就需要编译
       if (template) {
         const render = compileRoFunction(template);
-        ops.render; // jsx最终会被编译成h函数
+        ops.render = render; // jsx最终会被编译成h函数
       }
     }
 
