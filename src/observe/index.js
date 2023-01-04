@@ -1,4 +1,5 @@
 import { newArrayProto } from "./array";
+import Dep from "./dep";
 
 class Observer {
   constructor(data) {
@@ -34,16 +35,23 @@ class Observer {
 
 export function defineReactive(target, key, value) {
   observe(value); // 对所有的对象都进行属性劫持，构成递归
+  let dep = new Dep(); // 这样一来，每个属性都有一个唯一dep
   // 利用闭包，当前作用域不会被销毁
   Object.defineProperty(target, key, {
     // 取值的时候会执行get
     get() {
+      if (Dep.target) {
+        // 初始化Watcher的时候会把Watcher放到dep.target上
+        // 让当前dep记住当前watcher
+        dep.depend();
+      }
       return value;
     },
     // 修改的时候会执行set
     set(newValue) {
       if (newValue === value) return;
       value = newValue;
+      dep.notify(); // 通知dep更新
     },
   });
 }
