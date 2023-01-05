@@ -3,6 +3,8 @@ import Dep from "./dep";
 
 class Observer {
   constructor(data) {
+    // 每个对象都增加依赖收集
+    this.dep = new Dep();
     // 当前observer的实例，给数据加了标识，如果数据上有__ob__，则说明当前属性被观测过
     Object.defineProperty(data, "__ob__", {
       value: this,
@@ -33,8 +35,17 @@ class Observer {
   }
 }
 
+function dependArray(value) {
+  for (let i = 0; i < value.length; i++) {
+    value[i].__ob__ && value[i].__ob__.dep.depend();
+    if (Array.isArray(value[i])) {
+      dependArray(value[i]);
+    }
+  }
+}
+
 export function defineReactive(target, key, value) {
-  observe(value); // 对所有的对象都进行属性劫持，构成递归
+  let childOb = observe(value); // 对所有的对象都进行属性劫持，构成递归， childOb上有ob进行以来收集
   let dep = new Dep(); // 这样一来，每个属性都有一个唯一dep
   // 利用闭包，当前作用域不会被销毁
   Object.defineProperty(target, key, {
@@ -44,6 +55,12 @@ export function defineReactive(target, key, value) {
         // 初始化Watcher的时候会把Watcher放到dep.target上
         // 让当前dep记住当前watcher
         dep.depend();
+        if (childOb) {
+          childOb.dep.depend(); // 让数组和对象新增dep
+          if (Array.isArray(value)) {
+            dependArray(value);
+          }
+        }
       }
       return value;
     },

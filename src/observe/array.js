@@ -23,12 +23,10 @@ methods.forEach((method) => {
     // 需要对新增的数据再次进行劫持， 对新增元素也要进行检测
     let inserted; // 获取新增内容（数组）
     let ob = this.__ob__; // 获取this的observe实例
-
     switch (method) {
       case "push":
-        inserted = args;
-        break;
       case "unshift":
+        inserted = args;
         break;
       case "splice": // arr.splice() 的第三个参数
         inserted = args.slice(2);
@@ -39,6 +37,8 @@ methods.forEach((method) => {
       // 再次进行对新增内容的劫持检测
       ob.observeArray(inserted);
     }
+    // 数组变化，通知对应Watcher实现更新逻辑
+    ob.dep.notify();
     return result;
   };
 });

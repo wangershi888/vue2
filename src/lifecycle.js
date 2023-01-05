@@ -92,3 +92,12 @@ export function mountComponent(vm, el) {
   };
   new Watcher(vm, updateComponent, true);
 }
+
+export function callHook(vm, hook) {
+  let handlers = vm.$options[hook];
+  if (handlers) {
+    handlers.forEach((handler) => {
+      handler.call(vm);
+    });
+  }
+}
