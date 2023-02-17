@@ -7,6 +7,9 @@ export function initState(vm) {
     // 如果有data选项，那么我们初始化data
     initData(vm);
   }
+  if (opts.computed) {
+    initComputed(vm);
+  }
 }
 
 function proxy(vm, target, key) {
@@ -32,5 +35,28 @@ function initData(vm) {
   // 将vm._data 作为vm 代理
   for (let key in data) {
     proxy(vm, "_data", key);
+  }
+}
+
+function initComputed(vm) {
+  // 获取到用户写的代码
+  const computed = vm.$options.computed;
+
+  for (let key in computed) {
+    let userDef = computed[key];
+
+    defineComputed(vm, key, userDef);
+  }
+
+  function defineComputed(target, key, userDef) {
+    // 有可能是对象也有可能是函数
+    const getter = typeof userDef === "function" ? userDef : userDef.get;
+    const setter = userDef.set || (() => {});
+
+    // 可以通过实例获取到对应的属性
+    Object.defineProperty(target, key, {
+      get: getter,
+      set: setter,
+    });
   }
 }

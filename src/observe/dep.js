@@ -24,4 +24,16 @@ class Dep {
 
 Dep.target = null;
 
+let stack = [];
+// 渲染的时候会讲watcher入栈，渲染完成之后，会将watcher出栈，并且清空
+export function pushTarget(watcher) {
+  stack.push(watcher);
+  Dep.target = watcher;
+}
+
+export function popTarget() {
+  stack.pop(); // 去掉最后一个
+  Dep.target = stack[stack.length - 1];
+}
+
 export default Dep;

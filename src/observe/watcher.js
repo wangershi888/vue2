@@ -1,4 +1,4 @@
-import Dep from "./dep";
+import Dep, { popTarget, pushTarget } from "./dep";
 
 let id = 0;
 
@@ -33,9 +33,11 @@ class Watcher {
     }
   }
   get() {
-    Dep.target = this; // 将当前Watcher挂载到Dep的target上
+    pushTarget(this);
+    // Dep.target = this; // 将当前Watcher挂载到Dep的target上
     this.getter(); // 获取vm上的值，渲染
-    Dep.target = null; // 渲染完毕后就进行清空
+    popTarget();
+    // Dep.target = null; // 渲染完毕后就进行清空
   }
   update() {
     // 不立即更新，等同步任务结束后，再统一进行一次更新
