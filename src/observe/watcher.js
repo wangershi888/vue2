@@ -14,37 +14,71 @@ let id = 0;
  */
 
 class Watcher {
-  // 不同的组件有不同的watcher
-  constructor(vm, fn, options) {
+  // 不同组件有不同的watcher   目前只有一个 渲染根实例的
+  constructor(vm, exprOrFn, options, cb) {
     this.id = id++;
-    this.renderWatcher = options; // 标识是一个渲染watcher
-    this.getter = fn; // getter 意味着调用这个函数可以发生取值操作
-    this.deps = []; // watcher 收集当前组件中的dep，后期实现计算属性以及清理不用dep等
+    this.renderWatcher = options; // 是一个渲染watcher
+
+    if (typeof exprOrFn === "string") {
+      this.getter = function () {
+        return vm[exprOrFn];
+      };
+    } else {
+      this.getter = exprOrFn; // getter意味着调用这个函数可以发生取值操作
+    }
+
+    this.deps = []; // 后续我们实现计算属性，和一些清理工作需要用到
     this.depsId = new Set();
-    this.get();
+    this.lazy = options.lazy;
+    this.cb = cb;
+    this.dirty = this.lazy; // 缓存值
+    this.vm = vm;
+    this.user = options.user; // 标识是否是用户自己的watcher
+
+    this.value = this.lazy ? undefined : this.get();
   }
   addDep(dep) {
-    // 去重记录
+    // 一个组件 对应着多个属性 重复的属性也不用记录
     let id = dep.id;
     if (!this.depsId.has(id)) {
       this.deps.push(dep);
-      this.depsId.add(dep); // watcher去重记录dep
-      dep.addSub(this); // dep记录watcher
+      this.depsId.add(id);
+      dep.addSub(this); // watcher已经记住了dep了而且去重了，此时让dep也记住watcher
     }
   }
+  evaluate() {
+    this.value = this.get(); // 获取到用户函数的返回值 并且还要标识为脏
+    this.dirty = false;
+  }
   get() {
-    pushTarget(this);
-    // Dep.target = this; // 将当前Watcher挂载到Dep的target上
-    this.getter(); // 获取vm上的值，渲染
-    popTarget();
-    // Dep.target = null; // 渲染完毕后就进行清空
+    pushTarget(this); // 静态属性就是只有一份
+    let value = this.getter.call(this.vm); // 会去vm上取值  vm._update(vm._render) 取name 和age
+    popTarget(); // 渲染完毕后就清空
+    return value;
+  }
+  depend() {
+    // watcher的depend 就是让watcher中dep去depend
+    let i = this.deps.length;
+    while (i--) {
+      // dep.depend()
+      this.deps[i].depend(); // 让计算属性watcher 也收集渲染watcher
+    }
   }
   update() {
-    // 不立即更新，等同步任务结束后，再统一进行一次更新
-    queueWatcher(this); // 把当前watcher暂存起来
+    if (this.lazy) {
+      // 如果是计算属性  依赖的值变化了 就标识计算属性是脏值了
+      this.dirty = true;
+    } else {
+      queueWatcher(this); // 把当前的watcher 暂存起来
+      // this.get(); // 重新渲染
+    }
   }
   run() {
-    this.get(); // 重新渲染
+    let oldValue = this.value;
+    let newValue = this.get(); // 渲染的时候用的是最新的vm来渲染的
+    if (this.user) {
+      this.cb.call(this.vm, newValue, oldValue);
+    }
   }
 }
 

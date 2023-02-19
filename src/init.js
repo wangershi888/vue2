@@ -1,5 +1,5 @@
 import { initState } from "./state";
-import { compileRoFunction } from "./compiler";
+import { compileToFunction } from "./compiler";
 import { mountComponent, callHook } from "./lifecycle";
 import { mergeOptions } from "./utils";
 // 用于给Vue扩展方法
@@ -37,7 +37,7 @@ export function initMixin(Vue) {
       }
       // 如果有template，则就需要编译
       if (template) {
-        const render = compileRoFunction(template);
+        const render = compileToFunction(template);
         ops.render = render; // jsx最终会被编译成h函数
       }
     }

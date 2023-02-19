@@ -55,9 +55,14 @@ export function initLifecycle(Vue) {
   Vue.prototype._update = function (vnode) {
     const vm = this;
     const el = vm.$el;
-
-    // patch既有初始化的功能也有更新的功能
-    vm.$el = patch(el, vnode);
+    const prevVnode = vm._vnode;
+    vm._vnode = vnode; // 把组件第一次产生的虚拟节点保存到_vnode上
+    if (prevVnode) {
+      // 之前渲染过了
+      vm.$el = patch(prevVnode, vnode);
+    } else {
+      vm.$el = patch(el, vnode);
+    }
   };
 
   // _c: 创建元素 _v: 创建文本 _s: JSON.stringify
